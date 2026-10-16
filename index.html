@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>圖書館陀螺大賽</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF4EC; --paper:#FFFFFF; --ink:#1B2E24; --muted:#5B6F63;
+  --forest:#1F4D3A; --moss:#6E9A5B; --card-blue:#2B5FA8; --lily:#F2C230;
+  --line:#CFDCCB; --ring1:#E6D3B0; --ring2:#D7BE92; --ring3:#C4A574;
+  --ok:#2F7D4F; --bad:#B8463A;
+  --display:"Huninn","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#13201A; --paper:#1C2C24; --ink:#E8F0E9; --muted:#9DB2A4;
+    --forest:#8FD1A8; --moss:#7FB06A; --card-blue:#7FA8E8; --lily:#F2C230;
+    --line:#2E4438; --ring1:#3B3226; --ring2:#4A3E2D; --ring3:#5A4B35;
+    --ok:#6FCB92; --bad:#EE8A7E;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#13201A; --paper:#1C2C24; --ink:#E8F0E9; --muted:#9DB2A4;
+  --forest:#8FD1A8; --moss:#7FB06A; --card-blue:#7FA8E8; --lily:#F2C230;
+  --line:#2E4438; --ring1:#3B3226; --ring2:#4A3E2D; --ring3:#5A4B35;
+  --ok:#6FCB92; --bad:#EE8A7E;
+}
+*,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none!important}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--card-blue);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(2rem,7vw,3.1rem);line-height:1.1;margin:0;color:var(--forest);letter-spacing:.02em}
+.sub{margin:6px 0 0;color:var(--muted)}
+.gear{flex:none;border:1.5px solid var(--line);background:var(--paper);border-radius:999px;padding:8px 14px;font-size:.9rem}
+.steps{display:flex;gap:6px;margin:0 0 18px;padding:0;list-style:none;overflow-x:auto}
+.steps li{flex:1;min-width:90px;text-align:center;padding:8px 6px;border-radius:10px;font-size:.88rem;color:var(--muted);background:transparent;border:1.5px dashed var(--line)}
+.steps li b{display:block;font-family:var(--display);font-weight:400;font-size:1.1rem}
+.steps li.on{background:var(--forest);color:var(--bg);border-style:solid;border-color:var(--forest)}
+.steps li.done{color:var(--forest);border-style:solid}
+section{display:none}
+section.on{display:block}
+.panel{background:var(--paper);border:1.5px solid var(--line);border-radius:18px;padding:18px}
+.panel + .panel{margin-top:14px}
+h2{font-family:var(--display);font-weight:400;font-size:1.45rem;margin:0 0 10px;color:var(--forest)}
+h3{font-size:1rem;margin:0 0 8px}
+.build{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:680px){.build{grid-template-columns:240px 1fr}}
+.preview{position:sticky;top:calc(env(safe-area-inset-top,0px) + 10px);align-self:start;text-align:center}
+.preview canvas{width:200px;height:200px;max-width:100%}
+.preview .pname{font-family:var(--display);font-size:1.3rem;color:var(--ink)}
+.stat{display:grid;grid-template-columns:3em 1fr;align-items:center;gap:8px;font-size:.85rem;margin-top:4px;text-align:left}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--moss);transition:width .3s}
+label.field{display:block;font-weight:700;margin-bottom:6px}
+input[type=text]{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg)}
+.swatches{display:flex;flex-wrap:wrap;gap:10px}
+.sw{width:44px;height:44px;border-radius:50%;border:3px solid transparent;box-shadow:inset 0 0 0 3px var(--paper)}
+.sw[aria-pressed="true"]{border-color:var(--ink)}
+.choices{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.choice{text-align:left;padding:10px 12px;border:1.5px solid var(--line);background:var(--bg);border-radius:12px}
+.choice strong{display:block}
+.choice small{color:var(--muted);display:block;line-height:1.4}
+.choice[aria-pressed="true"]{border-color:var(--forest);background:var(--paper);box-shadow:0 0 0 2px var(--forest) inset}
+.tag{display:inline-block;font-size:.72rem;padding:0 6px;border-radius:6px;background:var(--lily);color:#3A2E00;margin-left:4px;vertical-align:2px}
+.tag.n{background:var(--line);color:var(--ink)}
+.fact{margin-top:10px;padding:12px 14px;border-left:4px solid var(--moss);background:var(--bg);border-radius:0 10px 10px 0;font-size:.93rem}
+.cta{display:inline-block;border:none;background:var(--forest);color:var(--bg);padding:12px 22px;border-radius:999px;font-weight:700;font-size:1.02rem}
+.cta:disabled{opacity:.45;cursor:not-allowed}
+.ghost{border:1.5px solid var(--line);background:transparent;padding:10px 18px;border-radius:999px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px}
+.q-count{color:var(--muted);font-size:.9rem}
+.q-text{font-size:1.2rem;font-weight:700;margin:6px 0 14px}
+.opts{display:grid;gap:8px}
+.opt{text-align:left;padding:12px 14px;border:1.5px solid var(--line);background:var(--bg);border-radius:12px}
+.opt.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--paper))}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--paper))}
+.explain{margin-top:12px;font-size:.95rem}
+.explain b.okc{color:var(--ok)} .explain b.badc{color:var(--bad)}
+.energy{font-family:var(--display);font-size:1.1rem;color:var(--card-blue)}
+.arena-wrap{display:flex;justify-content:center}
+#arena{width:100%;max-width:440px;aspect-ratio:1/1;touch-action:manipulation}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:12px}
+.vs .side{min-width:0}
+.vs .side.r{text-align:right}
+.vs .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vs .meta{font-size:.8rem;color:var(--muted)}
+.vs .mid{font-family:var(--display);font-size:1.4rem;color:var(--muted)}
+.hp{height:12px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:4px}
+.hp i{display:block;height:100%;width:100%}
+.side.r .hp i{margin-left:auto}
+.log{min-height:1.6em;text-align:center;color:var(--muted);margin-top:8px}
+.result-title{font-family:var(--display);font-size:clamp(1.8rem,6vw,2.6rem);margin:0;color:var(--forest)}
+.drum{margin:16px 0;padding:22px 12px;border:3px double var(--card-blue);border-radius:16px;text-align:center;font-family:var(--display);font-size:clamp(1.5rem,6vw,2.2rem);color:var(--card-blue);background:var(--bg);min-height:1.6em}
+.drum.win{color:var(--ink);border-color:var(--lily);background:color-mix(in srgb,var(--lily) 25%,var(--paper))}
+.stamp{display:inline-block;transform:rotate(-6deg);border:3px solid var(--bad);color:var(--bad);padding:2px 12px;border-radius:8px;font-family:var(--display);font-size:1.1rem}
+.foot{margin-top:22px;font-size:.85rem;color:var(--muted);text-align:center}
+dialog{border:none;border-radius:18px;padding:0;max-width:min(560px,94vw);width:100%;background:var(--paper);color:var(--ink)}
+dialog::backdrop{background:rgba(10,20,15,.55)}
+.dlg{padding:20px;max-height:85vh;overflow:auto}
+textarea{width:100%;min-height:150px;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);font-family:var(--body)}
+select{padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg)}
+.help{font-size:.85rem;color:var(--muted);margin:4px 0 10px}
+.stock{font-size:.88rem;margin:8px 0;padding:10px;background:var(--bg);border-radius:10px}
+.stock div{display:flex;justify-content:space-between;gap:10px}
+.sr{position:absolute;left:-9999px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>圖書館陀螺大賽</h1>
+      <p class="sub">打造你的植物陀螺，答題充能，上場對戰贏抽獎！</p>
+    </div>
+    <button class="gear" id="openSettings" aria-label="館員設定">⚙ 館員設定</button>
+  </header>
+
+  <ol class="steps" id="steps">
+    <li class="on"><b>1</b>打造陀螺</li>
+    <li><b>2</b>知識充能</li>
+    <li><b>3</b>上場對戰</li>
+    <li><b>4</b>抽獎</li>
+  </ol>
+
+  <!-- STEP 1 -->
+  <section id="s1" class="on">
+    <div class="build">
+      <div class="panel preview">
+        <canvas id="prev" width="400" height="400" aria-label="陀螺預覽"></canvas>
+        <div class="pname" id="pName">我的陀螺</div>
+        <div class="q-count" id="pMeta"></div>
+        <div id="pStats"></div>
+      </div>
+      <div>
+        <div class="panel">
+          <label class="field" for="nameIn">幫陀螺取名字</label>
+          <input type="text" id="nameIn" maxlength="12" placeholder="例如：閃電書蟲">
+        </div>
+        <div class="panel">
+          <h3>選顏色</h3>
+          <div class="swatches" id="swatches"></div>
+        </div>
+        <div class="panel">
+          <h3>選類型</h3>
+          <div class="choices" id="types"></div>
+        </div>
+        <div class="panel">
+          <h3>選代表植物 <span class="q-count">（台灣原生植物，各有特殊技能）</span></h3>
+          <div class="choices" id="plants"></div>
+          <div class="fact" id="plantFact">選一種植物，看看它的小知識和技能。</div>
+        </div>
+        <div class="row">
+          <button class="cta" id="toQuiz" disabled>下一步：知識充能</button>
+          <span class="q-count" id="needHint">請選好類型和植物</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section id="s2">
+    <div class="panel">
+      <div class="row" style="margin-top:0;justify-content:space-between">
+        <span class="q-count" id="qCount"></span>
+        <span class="energy" id="energy">能量 +0%</span>
+      </div>
+      <div class="q-text" id="qText"></div>
+      <div class="opts" id="qOpts"></div>
+      <div class="explain" id="qExplain" aria-live="polite"></div>
+      <div class="row">
+        <button class="cta" id="qNext" hidden>下一題</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section id="s3">
+    <div class="panel">
+      <div class="vs">
+        <div class="side">
+          <div class="nm" id="aName"></div>
+          <div class="meta" id="aMeta"></div>
+          <div class="hp"><i id="aHp"></i></div>
+        </div>
+        <div class="mid">VS</div>
+        <div class="side r">
+          <div class="nm" id="bName"></div>
+          <div class="meta" id="bMeta"></div>
+          <div class="hp"><i id="bHp"></i></div>
+        </div>
+      </div>
+      <div class="arena-wrap"><canvas id="arena" aria-label="對戰場地"></canvas></div>
+      <div class="log" id="log" aria-live="polite">按下開始，3、2、1 發射！</div>
+      <div class="row" style="justify-content:center">
+        <button class="cta" id="launch">開始對戰</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section id="s4">
+    <div class="panel" style="text-align:center">
+      <p class="result-title" id="resTitle"></p>
+      <p id="resText"></p>
+      <div class="drum" id="drum">？</div>
+      <div class="row" style="justify-content:center">
+        <button class="cta" id="drawBtn">抽獎</button>
+        <button class="ghost" id="rematch">再戰一場</button>
+        <button class="ghost" id="nextPlayer">換下一位</button>
+      </div>
+      <p class="help" id="drawHelp"></p>
+    </div>
+  </section>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<dialog id="settings">
+  <div class="dlg">
+    <h2>館員設定</h2>
+    <label class="field" for="prizeIn">獎品清單</label>
+    <p class="help">每行一項，格式：獎品名稱 | 數量。不寫數量代表不限量（以 20 份計算機率）。</p>
+    <textarea id="prizeIn"></textarea>
+    <div class="stock" id="stockView"></div>
+    <div class="row">
+      <label>題數
+        <select id="qNumIn"><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
+      </label>
+      <label>對手強度
+        <select id="diffIn"><option value="0.85">簡單</option><option value="1" selected>普通</option><option value="1.15">困難</option></select>
+      </label>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" id="loserDrawIn"> 落敗也能抽獎</label>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" id="needAllIn"> 答對全部題目才能抽獎</label>
+    </div>
+    <div class="row">
+      <button class="cta" id="saveSettings">儲存設定</button>
+      <button class="ghost" id="resetStock">獎品數量重設</button>
+      <button class="ghost" id="closeSettings">關閉</button>
+    </div>
+    <p class="help">設定與剩餘數量只存在這台裝置的瀏覽器裡，活動現場請固定用同一台平板或電腦。</p>
+  </div>
+</dialog>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- data ---------- */
+const COLORS=[
+ {n:'琉璃藍',c:'#2B5FA8'},{n:'欒樹金',c:'#E0A526'},{n:'櫻花紅',c:'#D9466F'},{n:'森林綠',c:'#2F7D4F'},
+ {n:'夜空紫',c:'#6B4FA0'},{n:'溪石灰',c:'#6C7A80'},{n:'晨曦橙',c:'#E3702B'},{n:'海潮青',c:'#1E9AA5'}];
+const TYPES=[
+ {id:'atk',n:'攻擊型',d:'刀鋒外緣，撞擊力最強',s:{atk:7,def:3,sta:4}},
+ {id:'def',n:'防禦型',d:'厚重外環，硬吃撞擊',s:{atk:3,def:7,sta:5}},
+ {id:'sta',n:'持久型',d:'寬薄圓盤，轉得最久',s:{atk:3,def:4,sta:8}},
+ {id:'bal',n:'平衡型',d:'四瓣造型，攻守均衡',s:{atk:5,def:5,sta:5}}];
+const PLANTS=[
+ {id:'lily',n:'台灣百合',g:'百',end:true,b:{sta:1},sk:'山海綻放',skd:'耐力低於三成時，攻擊力提升五成。',f:'台灣特有種，從海岸到三千公尺高山都能生長，夏天開出白色喇叭狀的花。'},
+ {id:'koel',n:'台灣欒樹',g:'欒',end:true,b:{atk:1},sk:'四色變裝',skd:'每次撞擊有機會打出強化一擊。',f:'台灣特有，秋天先開黃花，接著結出粉紅到紅褐色的果實，一棵樹換好幾種顏色。'},
+ {id:'kand',n:'水筆仔',g:'筆',end:false,b:{def:1},sk:'胎生苗',skd:'耐力第一次歸零時，重新站起恢復三成。',f:'紅樹林植物，種子還在母樹上就發芽，長成一根根像筆的胎生苗。'},
+ {id:'taiw',n:'台灣杉',g:'杉',end:false,b:{def:1},sk:'參天巨木',skd:'受到的撞擊傷害減少一成五。',f:'屬名就叫 Taiwania，是第一個以台灣為屬名的植物，能長到六十公尺以上。'},
+ {id:'juni',n:'玉山圓柏',g:'柏',end:true,b:{sta:1},sk:'高山耐寒',skd:'自然流失的耐力減少兩成五。',f:'台灣特有，生長在高山森林界線附近，在強風寒冷中長成矮小的灌叢。'},
+ {id:'plei',n:'臺灣一葉蘭',g:'蘭',end:false,b:{atk:1},sk:'春日奇襲',skd:'第一次撞擊造成雙倍傷害。',f:'每個假球莖通常只長一片葉子，春天開出粉紫色的大花。'},
+ {id:'camp',n:'牛樟',g:'樟',end:true,b:{def:1},sk:'樟香護盾',skd:'每次撞擊都會回復一點耐力。',f:'台灣特有的樟科大樹，珍貴的牛樟芝只長在牛樟身上。'},
+ {id:'cher',n:'山櫻花',g:'櫻',end:false,b:{atk:1},sk:'緋紅疾風',skd:'移動速度更快，更容易撞到對手。',f:'台灣原生櫻花，冬末春初開出桃紅色、低垂的鐘形花。'}];
+
+const LIB_Q=[
+ {q:'書背上那串用來找書位置的號碼叫做什麼？',o:['索書號','ISBN','條碼號','頁碼'],e:'索書號由分類號和作者號等組成，書架就是照它排列的。'},
+ {q:'想知道圖書館有沒有某本書，最快的方法是？',o:['查詢線上館藏目錄','一排一排書架慢慢找','打電話問作者','去書店看看'],e:'館藏目錄能查到書在哪個分館、能不能借，還會告訴你索書號。'},
+ {q:'書快到期了但還沒看完，可以怎麼做？',o:['辦理續借','撕掉條碼留著','藏在書架角落','放著不管'],e:'如果沒有人預約，通常可以在網路或櫃台續借，次數依各館規定。'},
+ {q:'想借的書被別人借走了，可以怎麼辦？',o:['預約這本書','到對方家裡拿','直接放棄','買一本放進館裡'],e:'預約後，書一歸還就會替你保留，並通知你來取書。'},
+ {q:'中文圖書分類法裡，「800」是哪一類？',o:['語文類','科學類','宗教類','藝術類'],e:'800 是語文類，小說和詩集多半在這裡；300 是科學類，900 是藝術類。'},
+ {q:'想看今天的報紙或最新一期雜誌，要去哪個區域？',o:['期刊報紙區','兒童繪本區','自修室','視聽區'],e:'報紙和雜誌屬於連續出版品，通常集中放在期刊報紙區。'},
+ {q:'借書時通常需要準備什麼？',o:['借閱證或可借閱的證件','零錢','學校成績單','什麼都不用'],e:'各館規定不同，常見的是借閱證，有些館也能用手機上的電子借閱證。'},
+ {q:'在閱覽區看完的書，最好怎麼處理？',o:['放到還書車或指定位置','自己隨便塞回書架','直接帶回家','放在地上'],e:'書放錯位置就很難再被找到，交給館員上架最保險。'}];
+const PLANT_Q=[
+ {q:'種子還掛在母樹上就先發芽、長成筆狀小苗的紅樹林植物是？',o:['水筆仔','台灣杉','山櫻花','牛樟'],e:'水筆仔的胎生苗成熟後落下，插進泥灘就能繼續生長。'},
+ {q:'以「台灣」為屬名（Taiwania）、能長成巨木的是？',o:['台灣杉','台灣欒樹','水筆仔','臺灣一葉蘭'],e:'台灣杉是第一個以台灣為屬名的植物，能長到六十公尺以上。'},
+ {q:'秋天先開黃花、再結出紅褐色果實，一棵樹換好幾種顏色的是？',o:['台灣欒樹','玉山圓柏','台灣百合','水筆仔'],e:'台灣欒樹常被種成行道樹，秋天特別好認。'},
+ {q:'從海邊到高山都可能看到、開白色喇叭狀花的台灣特有種是？',o:['台灣百合','山櫻花','牛樟','台灣杉'],e:'台灣百合適應力很強，常在崩塌地或海岸岩壁上率先開花。'},
+ {q:'珍貴的「牛樟芝」只長在哪一種樹上？',o:['牛樟','台灣杉','台灣欒樹','玉山圓柏'],e:'牛樟是台灣特有種，牛樟芝只寄生在它身上。'},
+ {q:'在台灣高山強風中，能長成矮小灌叢的針葉樹是？',o:['玉山圓柏','水筆仔','台灣欒樹','牛樟'],e:'玉山圓柏生長在森林界線附近，環境越嚴酷長得越矮。'}];
+
+/* ---------- storage ---------- */
+const DEFAULT_PRIZES='造型書籤 | 30\n精美貼紙 | 50\n圖書館帆布袋 | 5\n神秘好禮 | 2\n再接再厲，謝謝參加';
+function load(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+let settings=Object.assign({prizes:DEFAULT_PRIZES,qNum:3,diff:1,loserDraw:false,needAll:false},load('lt-settings',{}));
+let stock=load('lt-stock',null);
+let stats=Object.assign({plays:0,wins:0,draws:0},load('lt-stats',{}));
+function parsePrizes(txt){
+  return txt.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+    const p=l.split('|'); const name=p[0].trim(); const n=p[1]!==undefined?parseInt(p[1],10):NaN;
+    return {name,qty:isNaN(n)?null:Math.max(0,n)};
+  }).filter(p=>p.name);
+}
+function syncStock(reset){
+  const list=parsePrizes(settings.prizes); const ns={};
+  list.forEach(p=>{ ns[p.name]=(!reset&&stock&&p.name in stock&&p.qty!==null)?Math.min(stock[p.name],p.qty):p.qty; });
+  stock=ns; save('lt-stock',stock);
+}
+if(!stock) syncStock(true); else syncStock(false);
+
+/* ---------- player state ---------- */
+const player={name:'',color:COLORS[0].c,type:null,plant:null,correct:0,total:0};
+
+/* ---------- helpers ---------- */
+function shade(hex,amt){
+  let c=hex.replace('#',''); let r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16);
+  const f=amt<0?0:255,t=Math.abs(amt); r=Math.round((f-r)*t+r);g=Math.round((f-g)*t+g);b=Math.round((f-b)*t+b);
+  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+function statsOf(typeId,plantId){
+  const t=TYPES.find(x=>x.id===typeId),p=PLANTS.find(x=>x.id===plantId);
+  const s=Object.assign({},t?t.s:{atk:0,def:0,sta:0});
+  if(p) for(const k in p.b) s[k]+=p.b[k];
+  return s;
+}
+
+/* ---------- drawing a top ---------- */
+function drawTop(ctx,x,y,r,ang,color,type,glyph,tilt){
+  ctx.save(); ctx.translate(x,y);
+  if(tilt){ctx.scale(1,1-tilt*0.55);}
+  ctx.rotate(ang);
+  const dark=shade(color,-0.35), light=shade(color,0.35);
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,.18)'; ctx.beginPath(); ctx.arc(r*0.08,r*0.12,r*1.02,0,Math.PI*2); ctx.fill();
+  if(type==='atk'){
+    ctx.fillStyle=dark;
+    for(let i=0;i<3;i++){ctx.save();ctx.rotate(i*Math.PI*2/3);ctx.beginPath();ctx.moveTo(r*0.35,-r*0.55);ctx.lineTo(r*1.18,-r*0.1);ctx.lineTo(r*0.6,r*0.45);ctx.closePath();ctx.fill();ctx.restore();}
+  }
+  const g=ctx.createRadialGradient(-r*0.3,-r*0.3,r*0.1,0,0,r);
+  g.addColorStop(0,light); g.addColorStop(1,color);
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,type==='atk'?r*0.86:r,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=dark; ctx.lineWidth=r*0.06;
+  if(type==='def'){
+    ctx.lineWidth=r*0.2; ctx.beginPath(); ctx.arc(0,0,r*0.88,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle=light;
+    for(let i=0;i<6;i++){const a=i*Math.PI/3;ctx.beginPath();ctx.arc(Math.cos(a)*r*0.88,Math.sin(a)*r*0.88,r*0.08,0,Math.PI*2);ctx.fill();}
+  } else if(type==='sta'){
+    ctx.lineWidth=r*0.04;
+    for(let i=0;i<10;i++){const a=i*Math.PI/5;ctx.beginPath();ctx.moveTo(Math.cos(a)*r*0.42,Math.sin(a)*r*0.42);ctx.lineTo(Math.cos(a)*r*0.96,Math.sin(a)*r*0.96);ctx.stroke();}
+    ctx.lineWidth=r*0.05; ctx.beginPath(); ctx.arc(0,0,r*0.97,0,Math.PI*2); ctx.stroke();
+  } else if(type==='bal'){
+    ctx.fillStyle=dark;
+    for(let i=0;i<4;i++){const a=i*Math.PI/2+Math.PI/4;ctx.beginPath();ctx.arc(Math.cos(a)*r*0.62,Math.sin(a)*r*0.62,r*0.2,0,Math.PI*2);ctx.fill();}
+  } else if(type==='atk'){
+    ctx.beginPath(); ctx.arc(0,0,r*0.86,0,Math.PI*2); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.arc(0,0,r*0.97,0,Math.PI*2); ctx.stroke();
+  }
+  // center cap with plant glyph
+  ctx.fillStyle='#FFFFFF'; ctx.beginPath(); ctx.arc(0,0,r*0.36,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=dark; ctx.lineWidth=r*0.04; ctx.stroke();
+  if(glyph){ctx.fillStyle=dark;ctx.font=`900 ${r*0.4}px ${css('--body')||'sans-serif'}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(glyph,0,r*0.02);}
+  ctx.restore();
+}
+
+/* ---------- step 1: builder ---------- */
+const sw=$('swatches');
+COLORS.forEach((c,i)=>{const b=document.createElement('button');b.className='sw';b.style.background=c.c;b.setAttribute('aria-label',c.n);b.title=c.n;b.setAttribute('aria-pressed',i===0);
+  b.onclick=()=>{player.color=c.c;[...sw.children].forEach(x=>x.setAttribute('aria-pressed',x===b));updatePreview();};sw.appendChild(b);});
+const ty=$('types');
+TYPES.forEach(t=>{const b=document.createElement('button');b.className='choice';b.setAttribute('aria-pressed','false');
+  b.innerHTML=`<strong>${t.n}</strong><small>${t.d}</small>`;
+  b.onclick=()=>{player.type=t.id;[...ty.children].forEach(x=>x.setAttribute('aria-pressed',x===b));updatePreview();};ty.appendChild(b);});
+const pl=$('plants');
+PLANTS.forEach(p=>{const b=document.createElement('button');b.className='choice';b.setAttribute('aria-pressed','false');
+  b.innerHTML=`<strong>${p.n}<span class="tag ${p.end?'':'n'}">${p.end?'特有種':'原生種'}</span></strong><small>技能：${p.sk}</small>`;
+  b.onclick=()=>{player.plant=p.id;[...pl.children].forEach(x=>x.setAttribute('aria-pressed',x===b));
+    $('plantFact').innerHTML=`<b>${p.n}</b>　${p.f}<br><b>技能「${p.sk}」</b>${p.skd}`;updatePreview();};pl.appendChild(b);});
+$('nameIn').addEventListener('input',e=>{player.name=e.target.value.trim();updatePreview();});
+
+function statBars(s){
+  return ['atk','def','sta'].map((k,i)=>`<div class="stat"><span>${['攻擊','防禦','耐力'][i]}</span><span class="bar"><i style="width:${Math.min(100,s[k]*10)}%"></i></span></div>`).join('');
+}
+function updatePreview(){
+  const p=PLANTS.find(x=>x.id===player.plant),t=TYPES.find(x=>x.id===player.type);
+  $('pName').textContent=player.name||'我的陀螺';
+  $('pMeta').textContent=[t?t.n:'尚未選類型',p?p.n:'尚未選植物'].join('／');
+  $('pStats').innerHTML=statBars(statsOf(player.type,player.plant));
+  const ok=player.type&&player.plant; $('toQuiz').disabled=!ok; $('needHint').textContent=ok?'':'請選好類型和植物';
+}
+const pc=$('prev'),pctx=pc.getContext('2d'); let pAng=0;
+function previewLoop(){
+  if($('s1').classList.contains('on')){
+    pctx.clearRect(0,0,400,400);
+    pctx.fillStyle=css('--ring1');pctx.beginPath();pctx.ellipse(200,330,120,22,0,0,Math.PI*2);pctx.fill();
+    const p=PLANTS.find(x=>x.id===player.plant);
+    pAng+=reduce?0.01:0.12;
+    drawTop(pctx,200,190,120,pAng,player.color,player.type,p?p.g:'？',0);
+  }
+  requestAnimationFrame(previewLoop);
+}
+updatePreview(); previewLoop();
+
+/* ---------- navigation ---------- */
+function go(n){
+  for(let i=1;i<=4;i++){$('s'+i).classList.toggle('on',i===n);}
+  [...$('steps').children].forEach((li,i)=>{li.classList.toggle('on',i===n-1);li.classList.toggle('done',i<n-1);});
+  window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});
+}
+
+/* ---------- step 2: quiz ---------- */
+let quiz=[],qi=0;
+$('toQuiz').onclick=()=>{
+  const n=settings.qNum; const plantN=Math.max(1,Math.round(n/3));
+  quiz=shuffle([...shuffle(LIB_Q).slice(0,n-plantN),...shuffle(PLANT_Q).slice(0,plantN)]);
+  qi=0;player.correct=0;player.total=quiz.length;showQ();go(2);
+};
+function showQ(){
+  const q=quiz[qi];
+  $('qCount').textContent=`第 ${qi+1} 題／共 ${quiz.length} 題`;
+  $('energy').textContent=`能量 +${player.correct*8}%`;
+  $('qText').textContent=q.q; $('qExplain').innerHTML=''; $('qNext').hidden=true;
+  const box=$('qOpts'); box.innerHTML='';
+  shuffle(q.o.map((t,i)=>({t,right:i===0}))).forEach(o=>{
+    const b=document.createElement('button');b.className='opt';b.textContent=o.t;
+    b.onclick=()=>{
+      [...box.children].forEach(x=>{x.disabled=true;if(x._right)x.classList.add('right');});
+      if(o.right){player.correct++;$('qExplain').innerHTML=`<b class="okc">答對了！陀螺能量 +8%</b>　${q.e}`;}
+      else{b.classList.add('wrong');$('qExplain').innerHTML=`<b class="badc">差一點！</b>　${q.e}`;}
+      $('energy').textContent=`能量 +${player.correct*8}%`;
+      $('qNext').hidden=false;$('qNext').textContent=qi<quiz.length-1?'下一題':'上場對戰';$('qNext').focus();
+    };
+    b._right=o.right;box.appendChild(b);
+  });
+}
+$('qNext').onclick=()=>{ if(qi<quiz.length-1){qi++;showQ();} else {go(3);setupBattle();} };
+
+/* ---------- step 3: battle ---------- */
+const OPP_NAMES=['館藏守護者','夜讀貓頭鷹','書架小精靈','借書狂熱者','安靜旋風','目錄偵探','繪本騎士','還書車特急'];
+const arena=$('arena'),actx=arena.getContext('2d');
+let S=400,dpr=1,A,B,running=false,ended=false,particles=[],floats=[],tElapsed=0,last=0,winner=null;
+function sizeArena(){
+  const w=Math.min(arena.parentElement.clientWidth||360,440); dpr=window.devicePixelRatio||1;
+  S=w; arena.width=w*dpr; arena.height=w*dpr; actx.setTransform(dpr,0,0,dpr,0,0);
+  if(!running) drawArena();
+}
+window.addEventListener('resize',sizeArena);
+function makeFighter(name,color,type,plant,power,side){
+  const s=statsOf(type,plant), p=PLANTS.find(x=>x.id===plant);
+  const max=100*(0.6+s.sta*0.08)*power;
+  return {name,color,type,plant,glyph:p.g,p,s,power,max,hp:max,x:0,y:0,vx:0,vy:0,ang:0,side,revived:false,firstHit:true,tilt:0,down:false,trail:[],spinLeft:0};
+}
+function setupBattle(){
+  const power=1+player.correct*0.08;
+  A=makeFighter(player.name||'我的陀螺',player.color,player.type,player.plant,power,1);
+  const oc=shuffle(COLORS.filter(c=>c.c!==player.color))[0].c;
+  const ot=shuffle(TYPES)[0].id, op=shuffle(PLANTS)[0].id;
+  B=makeFighter(shuffle(OPP_NAMES)[0],oc,ot,op,1.12*settings.diff,-1);
+  $('aName').textContent=A.name;$('bName').textContent=B.name;
+  $('aMeta').textContent=`${TYPES.find(t=>t.id===A.type).n}・${A.p.n}`;
+  $('bMeta').textContent=`${TYPES.find(t=>t.id===B.type).n}・${B.p.n}`;
+  $('aHp').style.background=A.color;$('bHp').style.background=B.color;
+  sizeArena(); resetPositions(); ended=false; running=false; winner=null; particles=[]; floats=[]; phase='idle'; phaseT=0; shake=0; rings=[]; confetti=[];
+  $('launch').hidden=false;$('launch').disabled=false;$('log').textContent='按下開始，3、2、1 發射！';
+  updateHp(); sizeArena();
+}
+function resetPositions(){
+  const R=S/2; [A,B].forEach(f=>{f.x=-f.side*R*0.55;f.y=f.side*R*0.2;f.vx=0;f.vy=0;f.hp=f.max;f.tilt=0;f.down=false;f.revived=false;f.firstHit=true;});
+}
+function updateHp(){
+  $('aHp').style.width=Math.max(0,A.hp/A.max*100)+'%';
+  $('bHp').style.width=Math.max(0,B.hp/B.max*100)+'%';
+}
+let phase='idle',phaseT=0,shake=0,rings=[],confetti=[];
+const HIT_WORDS=['鏘！','碰！','喀啦！','咚！'];
+function easeOutBounce(x){const n=7.5625,d=2.75;if(x<1/d)return n*x*x;if(x<2/d)return n*(x-=1.5/d)*x+.75;if(x<2.5/d)return n*(x-=2.25/d)*x+.9375;return n*(x-=2.625/d)*x+.984375;}
+function bigText(t,y,size,alpha,scale){
+  actx.save();actx.globalAlpha=Math.max(0,Math.min(1,alpha));actx.translate(S/2,y);actx.scale(scale,scale);
+  actx.font=`400 ${size}px ${css('--display')}`;actx.textAlign='center';actx.textBaseline='middle';
+  actx.lineWidth=size*0.16;actx.strokeStyle=css('--paper');actx.lineJoin='round';actx.strokeText(t,0,0);
+  actx.fillStyle=css('--forest');actx.fillText(t,0,0);actx.restore();
+}
+function drawArena(){
+  const R=S/2; actx.setTransform(dpr,0,0,dpr,0,0); actx.clearRect(0,0,S,S);
+  actx.save();
+  if(shake>0&&!reduce){actx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);}
+  const ringC=[css('--ring3'),css('--ring2'),css('--ring1')];
+  for(let i=0;i<9;i++){
+    const rr=R*(1-i*0.105); actx.fillStyle=ringC[i%3]; actx.beginPath();
+    for(let a=0;a<=Math.PI*2+0.01;a+=0.08){const w=1+0.012*Math.sin(a*5+i)+0.008*Math.sin(a*11+i*2);const px=R+Math.cos(a)*rr*w,py=R+Math.sin(a)*rr*w;a===0?actx.moveTo(px,py):actx.lineTo(px,py);}
+    actx.closePath(); actx.fill();
+  }
+  actx.fillStyle=ringC[0];actx.beginPath();actx.arc(R,R,R*0.04,0,Math.PI*2);actx.fill();
+  if(A&&B){
+    const r=S*0.075;
+    // motion trails
+    [A,B].forEach(f=>{f.trail.forEach((t,i)=>{actx.globalAlpha=(i/f.trail.length)*0.22;actx.fillStyle=f.color;actx.beginPath();actx.arc(R+t.x,R+t.y,r*(0.45+0.5*i/f.trail.length),0,Math.PI*2);actx.fill();});actx.globalAlpha=1;});
+    [A,B].forEach(f=>{
+      let sc=1,ox=0;
+      if(phase==='count') ox=(Math.random()-.5)*Math.min(4,phaseT*2);
+      if(phase==='drop') sc=1.8-0.8*easeOutBounce(Math.min(1,phaseT/0.45));
+      const live=f.hp/f.max, wob=f.down?0:(1-live)*r*0.16;
+      const x=R+f.x+ox+Math.cos(f.ang*0.3)*wob, y=R+f.y+Math.sin(f.ang*0.3)*wob;
+      if(phase==='end'&&winner===f){
+        const pulse=1.35+0.15*Math.sin(phaseT*8);
+        actx.strokeStyle=css('--lily');actx.lineWidth=4;actx.globalAlpha=0.8;
+        actx.beginPath();actx.arc(x,y,r*pulse,0,Math.PI*2);actx.stroke();actx.globalAlpha=1;
+      }
+      if((phase==='fight'||phase==='end')&&!f.down&&live>0.12){
+        actx.strokeStyle=f.color;actx.lineWidth=2.5;actx.lineCap='round';actx.globalAlpha=0.55*live;
+        for(let k=0;k<3;k++){const a0=f.ang*1.4+k*Math.PI*2/3;actx.beginPath();actx.arc(x,y,r*1.22,a0,a0+0.7*f.side);actx.stroke();}
+        actx.globalAlpha=1;
+      }
+      drawTop(actx,x,y,r*sc,f.ang,f.color,f.type,f.glyph,f.tilt);
+      if(phase==='count'){
+        // launcher + ripcord being pulled
+        const dir=Math.sign(f.x)||1, pull=(phaseT%0.7)/0.7, len=r*(0.6+1.3*Math.min(1,phaseT/2.1))+pull*r*0.3;
+        actx.fillStyle='#8A949A';actx.strokeStyle='#4A5358';actx.lineWidth=2;
+        actx.beginPath();actx.roundRect?actx.roundRect(x-r*0.9,y-r*0.28,r*1.8,r*0.56,r*0.2):actx.rect(x-r*0.9,y-r*0.28,r*1.8,r*0.56);actx.fill();actx.stroke();
+        const sx=x+dir*r*0.9,ex=sx+dir*len;
+        actx.strokeStyle=css('--ink');actx.lineWidth=2;actx.setLineDash([4,3]);actx.beginPath();actx.moveTo(sx,y);actx.lineTo(ex,y);actx.stroke();actx.setLineDash([]);
+        actx.fillStyle=f.color;actx.beginPath();actx.arc(ex,y,r*0.22,0,Math.PI*2);actx.fill();
+      }
+    });
+  }
+  rings.forEach(g=>{actx.globalAlpha=Math.max(0,g.life);actx.strokeStyle=g.c;actx.lineWidth=3*g.life+1;actx.beginPath();actx.arc(R+g.x,R+g.y,g.r,0,Math.PI*2);actx.stroke();});
+  actx.globalAlpha=1;
+  particles.forEach(p=>{actx.globalAlpha=Math.max(0,p.life);actx.fillStyle=p.c;actx.beginPath();actx.arc(R+p.x,R+p.y,p.s,0,Math.PI*2);actx.fill();});
+  actx.globalAlpha=1;
+  floats.forEach(f=>{actx.globalAlpha=Math.max(0,f.life);actx.font=`700 ${Math.max(14,S*0.045)}px ${css('--body')}`;actx.textAlign='center';actx.lineWidth=4;actx.strokeStyle=css('--paper');actx.strokeText(f.t,R+f.x,R+f.y);actx.fillStyle=css('--ink');actx.fillText(f.t,R+f.x,R+f.y);});
+  actx.globalAlpha=1;
+  actx.restore();
+  // overlays (not shaken)
+  if(phase==='count'){
+    const n=3-Math.floor(phaseT/0.7), fr=(phaseT%0.7)/0.7;
+    if(n>=1) bigText(String(n),S/2,S*0.32,1-fr*0.9,1.4-fr*0.5);
+  }
+  if(phase==='drop'||(phase==='fight'&&phaseT<0.4)){
+    const t=phase==='drop'?phaseT:0.45+phaseT;
+    bigText('發射！',S/2,S*0.16,1-Math.max(0,t-0.5)*2.5,0.8+Math.min(0.4,t));
+  }
+  confetti.forEach(c=>{actx.save();actx.translate(c.x,c.y);actx.rotate(c.a);actx.fillStyle=c.c;actx.beginPath();actx.ellipse(0,0,c.s,c.s*0.45,0,0,Math.PI*2);actx.fill();actx.restore();});
+  if(phase==='end'&&winner&&phaseT>0.5){
+    const k=Math.min(1,(phaseT-0.5)/0.3);
+    bigText(winner===A?'勝利！':'落敗…',S*0.5,S*0.15,k,0.7+0.3*easeOutBounce(k));
+  }
+}
+function floatText(f,t){floats.push({t,x:f.x,y:f.y-S*0.1,life:1.4});}
+function burst(x,y,colors,n,speed){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,v=speed*(0.5+Math.random());particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:1,s:1.5+Math.random()*2.5,c:colors[Math.random()*colors.length|0]});}}
+$('launch').onclick=()=>{
+  $('launch').disabled=true;$('launch').hidden=true; stats.plays++; save('lt-stats',stats); renderFoot();
+  phase='count';phaseT=0;running=true;$('log').textContent='拉緊發射線…';
+  last=performance.now();requestAnimationFrame(step);
+};
+function launchVel(){
+  const spd=S/2*1.6;
+  [A,B].forEach(f=>{f.vx=(Math.random()-.5)*spd*0.3;f.vy=-f.side*spd*0.7;});
+}
+let hitCd=0;
+function damage(att,def,impact){
+  let atk=att.s.atk;
+  if(att.plant==='lily'&&att.hp<att.max*0.3) atk*=1.5;
+  let d=2.4*(atk/Math.max(1,def.s.def))*(1+impact/(S*3))*att.power;
+  if(att.plant==='koel'&&Math.random()<0.25){d*=1.7;floatText(att,'四色變裝！');}
+  if(att.plant==='plei'&&att.firstHit){d*=2;floatText(att,'春日奇襲！');}
+  att.firstHit=false;
+  if(def.plant==='taiw') d*=0.85;
+  def.hp-=d;
+  if(att.plant==='camp'){att.hp=Math.min(att.max,att.hp+1.2);}
+}
+function physics(dt,R,r,lim){
+  if(phase==='fight') tElapsed+=dt;
+  [A,B].forEach(f=>{
+    if(f.down){f.vx*=0.9;f.vy*=0.9;f.tilt=Math.min(1,f.tilt+dt*1.4);f.x+=f.vx*dt;f.y+=f.vy*dt;f.ang+=f.spinLeft*dt;f.spinLeft*=0.96;
+      f.x+=Math.cos(f.ang)*f.spinLeft*0.06;f.y+=Math.sin(f.ang)*f.spinLeft*0.06;f.trail=[];return;}
+    const live=f.hp/f.max, d=Math.hypot(f.x,f.y)||1;
+    let ax=-f.x*2.4, ay=-f.y*2.4;
+    const orbit=R*1.1*(0.4+live*0.6)*(f.plant==='cher'?1.35:1);
+    ax+=(-f.y/d)*orbit*f.side; ay+=(f.x/d)*orbit*f.side;
+    ax+=(Math.random()-.5)*R*1.2; ay+=(Math.random()-.5)*R*1.2;
+    f.vx+=ax*dt; f.vy+=ay*dt; f.vx*=0.992; f.vy*=0.992;
+    f.x+=f.vx*dt; f.y+=f.vy*dt;
+    const dd=Math.hypot(f.x,f.y);
+    if(dd>lim){const nx=f.x/dd,ny=f.y/dd;const vn=f.vx*nx+f.vy*ny;if(vn>0){f.vx-=1.8*vn*nx;f.vy-=1.8*vn*ny;burst(f.x+nx*r,f.y+ny*r,[css('--ring3'),'#FFFFFF'],5,R*0.4);}f.x=nx*lim;f.y=ny*lim;}
+    if(phase==='fight'){let decay=3.2*(1.25-f.s.sta*0.06); if(f.plant==='juni') decay*=0.75; f.hp-=decay*dt;}
+    f.ang+=(4+live*22)*dt*f.side;
+    f.trail.push({x:f.x,y:f.y}); if(f.trail.length>8) f.trail.shift();
+  });
+  hitCd-=dt;
+  const dx=B.x-A.x,dy=B.y-A.y,dist=Math.hypot(dx,dy)||1;
+  if(dist<2*r&&!A.down&&!B.down){
+    const nx=dx/dist,ny=dy/dist,ov=2*r-dist;
+    A.x-=nx*ov/2;A.y-=ny*ov/2;B.x+=nx*ov/2;B.y+=ny*ov/2;
+    const rel=(A.vx-B.vx)*nx+(A.vy-B.vy)*ny;
+    if(rel>0){
+      const bump=Math.max(rel,R*0.5)*1.05;
+      A.vx-=nx*bump;A.vy-=ny*bump;B.vx+=nx*bump;B.vy+=ny*bump;
+      if(hitCd<=0&&phase==='fight'){
+        hitCd=0.15; damage(A,B,rel); damage(B,A,rel);
+        const cx=A.x+nx*r,cy=A.y+ny*r;
+        burst(cx,cy,[A.color,B.color,'#F2C230','#FFFFFF'],16,R);
+        rings.push({x:cx,y:cy,r:r*0.3,life:1,c:'#F2C230'});
+        shake=Math.min(11,3+rel/(S*0.25));
+        if(rel>R*0.9||Math.random()<0.3) floats.push({t:HIT_WORDS[Math.random()*HIT_WORDS.length|0],x:cx,y:cy-r*0.6,life:0.9});
+      }
+    }
+  }
+  if(phase!=='fight') return;
+  [A,B].forEach(f=>{
+    if(!f.down&&f.hp<=0){
+      if(f.plant==='kand'&&!f.revived){f.revived=true;f.hp=f.max*0.3;floatText(f,'胎生苗！再站起來');rings.push({x:f.x,y:f.y,r:r,life:1,c:'#6E9A5B'});}
+      else knockDown(f);
+    }
+  });
+  if(A.down||B.down){winner=A.down?B:A;endBattle();}
+  else if(tElapsed>30){winner=(A.hp/A.max>=B.hp/B.max)?A:B;knockDown(winner===A?B:A);endBattle();}
+}
+function knockDown(f){
+  f.hp=0;f.down=true;f.spinLeft=10*f.side;f.trail=[];
+  floatText(f,'倒下！');rings.push({x:f.x,y:f.y,r:S*0.075,life:1.2,c:f.color});
+  burst(f.x,f.y,[f.color,'#FFFFFF'],24,S*0.4);shake=12;
+}
+function endBattle(){
+  phase='end';phaseT=0;ended=true;$('log').textContent=`${winner.name} 獲勝！`;
+  if(winner===A){
+    const cols=['#6E9A5B','#2F7D4F','#F2C230','#D9466F','#FFFFFF','#E0A526'];
+    const n=reduce?15:70;
+    for(let i=0;i<n;i++) confetti.push({x:Math.random()*S,y:-Math.random()*S*0.6,vy:S*(0.25+Math.random()*0.35),vx:(Math.random()-.5)*S*0.15,a:Math.random()*6,va:(Math.random()-.5)*8,s:S*(0.012+Math.random()*0.014),c:cols[i%cols.length]});
+  }
+}
+function step(now){
+  if(!running) return;
+  const dt=Math.min(0.033,(now-last)/1000); last=now; phaseT+=dt;
+  const R=S/2,r=S*0.075,lim=R*0.92-r;
+  shake=Math.max(0,shake-dt*30);
+  if(phase==='count'){
+    [A,B].forEach(f=>{f.ang+=dt*(1+phaseT*3)*f.side;});
+    const n=3-Math.floor(phaseT/0.7); if(n>=1) $('log').textContent=`拉緊發射線… ${n}`;
+    if(phaseT>=2.1){phase='drop';phaseT=0;$('log').textContent='發射！';launchVel();}
+  } else if(phase==='drop'){
+    [A,B].forEach(f=>{f.ang+=26*dt*f.side;});
+    if(phaseT>=0.45){phase='fight';phaseT=0;tElapsed=0;shake=6;
+      [A,B].forEach(f=>{rings.push({x:f.x,y:f.y,r:r,life:1,c:f.color});burst(f.x,f.y,[css('--ring3'),'#FFFFFF'],10,R*0.5);});
+      $('log').textContent='對戰中！';}
+  } else physics(dt,R,r,lim);
+  particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=0.9;p.vy*=0.9;p.life-=dt*2;}); particles=particles.filter(p=>p.life>0);
+  floats.forEach(f=>{f.y-=S*0.08*dt;f.life-=dt;}); floats=floats.filter(f=>f.life>0);
+  rings.forEach(g=>{g.r+=S*0.35*dt;g.life-=dt*2;}); rings=rings.filter(g=>g.life>0);
+  confetti.forEach(c=>{c.y+=c.vy*dt;c.x+=c.vx*dt+Math.sin(c.a)*0.6;c.a+=c.va*dt;}); confetti=confetti.filter(c=>c.y<S+20);
+  updateHp(); drawArena();
+  if(phase==='end'&&phaseT>2.6){running=false;showResult();return;}
+  requestAnimationFrame(step);
+}
+
+/* ---------- step 4: result & raffle ---------- */
+function canDraw(){
+  const won=winner===A;
+  if(settings.needAll&&player.correct<player.total) return {ok:false,why:'全部答對才能抽獎，下次加油！'};
+  if(!won&&!settings.loserDraw) return {ok:false,why:'贏得對戰就能抽獎，再挑戰一次吧！'};
+  return {ok:true};
+}
+let drawnThisRound=false;
+function showResult(){
+  const won=winner===A;
+  if(won){stats.wins++;save('lt-stats',stats);}
+  $('resTitle').textContent=won?'你贏了！':'可惜落敗';
+  $('resText').textContent=`答對 ${player.correct}／${player.total} 題，陀螺能量 +${player.correct*8}%。${won?`「${A.name}」轉到了最後！`:`「${B.name}」這次比較強。`}`;
+  const c=canDraw(); drawnThisRound=false;
+  $('drum').textContent='？';$('drum').classList.remove('win');
+  $('drawBtn').hidden=!c.ok; $('drawBtn').disabled=false;
+  $('drawHelp').textContent=c.ok?'按下抽獎，請館員確認後領獎。':c.why;
+  go(4); renderFoot();
+}
+function pickPrize(){
+  const list=parsePrizes(settings.prizes).map(p=>({name:p.name,w:stock[p.name]===null||stock[p.name]===undefined?20:stock[p.name],lim:stock[p.name]!==null&&stock[p.name]!==undefined}))
+    .filter(p=>p.w>0);
+  const tot=list.reduce((s,p)=>s+p.w,0); if(!tot) return null;
+  let x=Math.random()*tot; for(const p of list){x-=p.w;if(x<=0)return p;} return list[list.length-1];
+}
+$('drawBtn').onclick=()=>{
+  if(drawnThisRound) return;
+  const prize=pickPrize(); const drum=$('drum');
+  if(!prize){drum.textContent='獎品已全部抽完';$('drawHelp').textContent='請館員到設定補充獎品數量。';return;}
+  drawnThisRound=true; $('drawBtn').disabled=true;
+  const names=parsePrizes(settings.prizes).map(p=>p.name);
+  let t=0,delay=50; const total=reduce?1:22;
+  (function tick(){
+    t++; drum.textContent=names[t%names.length];
+    if(t<total){delay*=1.1;setTimeout(tick,delay);}
+    else{
+      drum.textContent=prize.name; drum.classList.add('win');
+      if(prize.lim){stock[prize.name]=Math.max(0,stock[prize.name]-1);save('lt-stock',stock);}
+      stats.draws++;save('lt-stats',stats);renderFoot();
+      $('drawHelp').innerHTML='<span class="stamp">已抽獎</span>　請出示這個畫面給館員領獎。';
+      $('drawBtn').hidden=true;
+    }
+  })();
+};
+$('rematch').onclick=()=>{go(3);setupBattle();};
+$('nextPlayer').onclick=()=>{
+  player.name='';player.type=null;player.plant=null;player.color=COLORS[0].c;player.correct=0;
+  $('nameIn').value='';
+  [...sw.children].forEach((x,i)=>x.setAttribute('aria-pressed',i===0));
+  [...ty.children,...pl.children].forEach(x=>x.setAttribute('aria-pressed','false'));
+  $('plantFact').textContent='選一種植物，看看它的小知識和技能。';
+  updatePreview(); go(1);
+};
+
+/* ---------- settings ---------- */
+const dlg=$('settings');
+function renderStock(){
+  const list=parsePrizes(settings.prizes);
+  $('stockView').innerHTML='<b>目前剩餘</b>'+list.map(p=>`<div><span>${p.name.replace(/</g,'&lt;')}</span><span>${stock[p.name]===null||stock[p.name]===undefined?'不限量':stock[p.name]+' 份'}</span></div>`).join('');
+}
+function renderFoot(){$('foot').textContent=`今日已對戰 ${stats.plays} 場・玩家獲勝 ${stats.wins} 場・已抽出 ${stats.draws} 份獎品`;}
+$('openSettings').onclick=()=>{
+  $('prizeIn').value=settings.prizes;$('qNumIn').value=String(settings.qNum);$('diffIn').value=String(settings.diff);
+  $('loserDrawIn').checked=settings.loserDraw;$('needAllIn').checked=settings.needAll;renderStock();
+  if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open','');
+};
+$('closeSettings').onclick=()=>dlg.close();
+$('saveSettings').onclick=()=>{
+  settings.prizes=$('prizeIn').value.trim()||DEFAULT_PRIZES;settings.qNum=parseInt($('qNumIn').value,10);
+  settings.diff=parseFloat($('diffIn').value);settings.loserDraw=$('loserDrawIn').checked;settings.needAll=$('needAllIn').checked;
+  save('lt-settings',settings);syncStock(false);renderStock();$('saveSettings').textContent='已儲存';setTimeout(()=>$('saveSettings').textContent='儲存設定',1200);
+};
+$('resetStock').onclick=()=>{
+  if(!confirm('把所有獎品數量重設為清單上的數量，並清空今日統計？'))return;
+  settings.prizes=$('prizeIn').value.trim()||DEFAULT_PRIZES;save('lt-settings',settings);
+  syncStock(true);stats={plays:0,wins:0,draws:0};save('lt-stats',stats);renderStock();renderFoot();
+};
+renderFoot(); sizeArena();
+})();
+</script>
+</body>
+</html>
